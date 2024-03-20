@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera with Watermark</title>
+    <style>
+        #canvas-container {
+            position: relative;
+            width: 100%;
+            height: 300px; /* 设置合适的高度 */
+        }
+        #canvas, #watermark {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+<input type="file" accept="image/*" capture="environment" id="fileInput">
+<div id="canvas-container"></div>
+
+<script>
+    document.getElementById('fileInput').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+
+        if (!file) return;
+
+        const canvasContainer = document.getElementById('canvas-container');
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = canvasContainer.clientWidth;
+        canvas.height = canvasContainer.clientHeight;
+        canvas.id = 'canvas';
+
+        const reader = new FileReader();
+        reader.onload = function(readerEvent) {
+            const image = new Image();
+            image.onload = function() {
+                ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+                // 添加水印
+                const watermark = new Image();
+                watermark.src = 'watermark.png'; // 替换为你的水印图片路径
+                watermark.onload = function() {
+                    const scaleFactor = Math.min(canvas.width / 4 / watermark.width, canvas.height / 4 / watermark.height); // 缩放比例
+                    const x = canvas.width - watermark.width * scaleFactor - 10; // 水印位置
+                    const y = canvas.height - watermark.height * scaleFactor - 10; // 水印位置
+                    ctx.drawImage(watermark, x, y, watermark.width * scaleFactor, watermark.height * scaleFactor);
+
+                    // 显示图片
+                    canvasContainer.appendChild(canvas);
+                };
+            };
+            image.src = readerEvent.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+</script>
+</body>
+</html>

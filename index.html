@@ -5,57 +5,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Camera with Watermark</title>
     <style>
-        #canvas-container {
-            position: relative;
-            width: 100%;
-            height: 300px; /* 设置合适的高度 */
+        #canvas {
+            display: none;
         }
-        #canvas, #watermark {
-            position: absolute;
-            top: 0;
-            left: 0;
+        #output {
+            width: 80%;
+            margin: 20px auto;
         }
     </style>
 </head>
 <body>
-<input type="file" accept="image/*" capture="environment" id="fileInput">
-<div id="canvas-container"></div>
-
+<div id="camera">
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="capture">Capture</button>
+</div>
+<canvas id="canvas" width="640" height="480"></canvas>
+<div id="output"></div>
 <script>
-    document.getElementById('fileInput').addEventListener('change', function(event) {
-        const file = event.target.files[0];
+    // 获取video元素
+    const video = document.getElementById('video');
+    // 获取canvas元素
+    const canvas = document.getElementById('canvas');
+    // 获取capture按钮
+    const captureButton = document.getElementById('capture');
+    // 获取output元素
+    const output = document.getElementById('output');
 
-        if (!file) return;
+    // 获取摄像头
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            video.srcObject = stream;
+        })
+        .catch(err => console.error('Error accessing the camera:', err));
 
-        const canvasContainer = document.getElementById('canvas-container');
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = canvasContainer.clientWidth;
-        canvas.height = canvasContainer.clientHeight;
-        canvas.id = 'canvas';
+    // 当capture按钮被点击时
+    captureButton.addEventListener('click', () => {
+        // 将视频画面绘制到canvas上
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        const reader = new FileReader();
-        reader.onload = function(readerEvent) {
-            const image = new Image();
-            image.onload = function() {
-                ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+        // 创建一个Image对象，用于加载水印图片
+        const watermarkImg = new Image();
+        watermarkImg.src = 'watermark.png'; // 替换为你的水印图片路径
 
-                // 添加水印
-                const watermark = new Image();
-                watermark.src = 'watermark.png'; // 替换为你的水印图片路径
-                watermark.onload = function() {
-                    const scaleFactor = Math.min(canvas.width / 4 / watermark.width, canvas.height / 4 / watermark.height); // 缩放比例
-                    const x = canvas.width - watermark.width * scaleFactor - 10; // 水印位置
-                    const y = canvas.height - watermark.height * scaleFactor - 10; // 水印位置
-                    ctx.drawImage(watermark, x, y, watermark.width * scaleFactor, watermark.height * scaleFactor);
+        // 当水印图片加载完成时
+        watermarkImg.onload = () => {
+            // 将水印绘制到canvas上
+            canvas.getContext('2d').drawImage(watermarkImg, canvas.width - watermarkImg.width - 10, canvas.height - watermarkImg.height - 10);
 
-                    // 显示图片
-                    canvasContainer.appendChild(canvas);
-                };
-            };
-            image.src = readerEvent.target.result;
+            // 将canvas转换为base64格式的图片数据
+            const imageDataURL = canvas.toDataURL('image/jpeg');
+
+            // 创建一个新的Image对象，用于显示带水印的图片
+            const watermarkedImage = new Image();
+            watermarkedImage.src = imageDataURL;
+
+            // 将带水印的图片显示在output元素中
+            output.innerHTML = '';
+            output.appendChild(watermarkedImage);
+            // 显示canvas元素，以便调试
+            canvas.style.display = 'block';
         };
-        reader.readAsDataURL(file);
     });
 </script>
 </body>

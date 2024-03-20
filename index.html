@@ -5,66 +5,83 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Camera with Watermark</title>
     <style>
-        #canvas {
-            display: none;
+        #camera {
+            text-align: center;
+        }
+        #captureBtn {
+            margin-top: 20px;
         }
         #output {
-            width: 80%;
-            margin: 20px auto;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
 <div id="camera">
-    <video id="video" width="640" height="480" autoplay></video>
-    <button id="capture">Capture</button>
+    <button id="captureBtn">Capture Photo</button>
 </div>
-<canvas id="canvas" width="640" height="480"></canvas>
 <div id="output"></div>
 <script>
-    // 获取video元素
-    const video = document.getElementById('video');
-    // 获取canvas元素
-    const canvas = document.getElementById('canvas');
-    // 获取capture按钮
-    const captureButton = document.getElementById('capture');
-    // 获取output元素
+    const captureButton = document.getElementById('captureBtn');
     const output = document.getElementById('output');
-
-    // 获取摄像头
-    navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
-            video.srcObject = stream;
-        })
-        .catch(err => console.error('Error accessing the camera:', err));
 
     // 当capture按钮被点击时
     captureButton.addEventListener('click', () => {
-        // 将视频画面绘制到canvas上
-        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        // 创建一个input元素，用于选择图片文件
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*'; // 只接受图片文件
+        input.capture = 'camera'; // 打开摄像头
+        input.addEventListener('change', () => {
+            const file = input.files[0]; // 获取选择的文件
 
-        // 创建一个Image对象，用于加载水印图片
-        const watermarkImg = new Image();
-        watermarkImg.src = 'watermark.png'; // 替换为你的水印图片路径
+            // 创建一个FileReader对象，用于读取文件
+            const reader = new FileReader();
+            reader.onload = () => {
+                // 创建一个Image对象，用于加载照片
+                const photo = new Image();
+                photo.src = reader.result;
 
-        // 当水印图片加载完成时
-        watermarkImg.onload = () => {
-            // 将水印绘制到canvas上
-            canvas.getContext('2d').drawImage(watermarkImg, canvas.width - watermarkImg.width - 10, canvas.height - watermarkImg.height - 10);
+                // 当照片加载完成时
+                photo.onload = () => {
+                    // 创建一个Canvas元素，用于添加水印
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = photo.width;
+                    canvas.height = photo.height;
 
-            // 将canvas转换为base64格式的图片数据
-            const imageDataURL = canvas.toDataURL('image/jpeg');
+                    // 绘制照片到Canvas上
+                    ctx.drawImage(photo, 0, 0);
+                    // 获取当前时间
+                    const currentTime = new Date().toLocaleString();
+                    // 添加水印
+                    ctx.font = '50px Arial';
+                    ctx.fillStyle = 'white';
+                    ctx.fillStyle = 'red';
+                    ctx.fillText('坚锐智链', 10, canvas.height - 10);
 
-            // 创建一个新的Image对象，用于显示带水印的图片
-            const watermarkedImage = new Image();
-            watermarkedImage.src = imageDataURL;
+                    ctx.fillText(currentTime, 10, canvas.height - 80); // 当前时间
 
-            // 将带水印的图片显示在output元素中
-            output.innerHTML = '';
-            output.appendChild(watermarkedImage);
-            // 显示canvas元素，以便调试
-            canvas.style.display = 'block';
-        };
+
+                    // 将Canvas转换为blob对象
+                    canvas.toBlob(blob => {
+                        const url = URL.createObjectURL(blob); // 创建一个本地URL
+                        const image = new Image();
+                        image.src = url;
+
+                        // 将带水印的照片显示在output容器中
+                        output.innerHTML = '';
+                        output.appendChild(image);
+                    }, 'image/jpeg', 0.9); // 保存为jpeg格式，质量为0.9
+                };
+            };
+
+            if (file) {
+                reader.readAsDataURL(file); // 读取文件
+            }
+        });
+
+        input.click(); // 模拟点击input元素
     });
 </script>
 </body>

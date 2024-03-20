@@ -60,8 +60,10 @@
                     // 创建一个Canvas元素，用于添加水印
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
-                    canvas.width = photo.width;
-                    canvas.height = photo.height;
+                    // canvas.width = photo.width;
+                    // canvas.height = photo.height;
+                    canvas.width = photo.width * 2;
+                    canvas.height = photo.height * 2;
 
                     // 绘制照片到Canvas上
                     ctx.drawImage(photo, 0, 0);

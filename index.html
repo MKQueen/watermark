@@ -50,6 +50,7 @@
     const res = encodeURIComponent(queryString)
     console.log(res)
     let url = 'weixin://dl/business/?appid=wx5aa793e3bfd14081&path=pages/register/index&env_version=trial&query='+res
+    console.log(url,"微信地址")
 
     setTimeout(()=>{
         window.location.href = url
